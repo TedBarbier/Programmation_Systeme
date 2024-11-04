@@ -218,3 +218,94 @@ void* mini_calloc(int size_element, int number_element) {
     return memory;
 }
 ```
+
+Exercice 12.
+```c 
+void test_mini_calloc() {
+    printf("Running test_mini_calloc...\n");
+
+    // Test 1: Allocate memory and check if it's initialized to zero
+    int *arr = (int*) mini_calloc(sizeof(int), 5);
+    if (arr == NULL) {
+        printf("Test 1 Failed: mini_calloc returned NULL\n");
+        return;
+    }
+    for (int i = 0; i < 5; i++) {
+        if (arr[i] != 0) {
+            printf("Test 1 Failed: Memory not initialized to zero\n");
+            return;
+        }
+    }
+    printf("Test 1 Passed\n");
+
+    // Test 2: Allocate memory with invalid parameters
+    void *ptr = mini_calloc(-1, 5);
+    if (ptr != NULL) {
+
+        printf("Test 2 Failed: mini_calloc should return NULL for invalid parameters\n");
+        return;
+    }
+    printf("Test 2 Passed\n");
+
+    // Test 3: Reuse a free block
+    mini_free(arr);
+    int *arr2 = (int*) mini_calloc(sizeof(int), 5);
+    if (arr2 != arr) {
+        printf("Test 3 Failed: mini_calloc did not reuse the free block\n");
+        return;
+    }
+    printf("Test 3 Passed\n");
+}
+
+void test_mini_free() {
+    printf("Running test_mini_free...\n");
+
+    // Test 1: Free a valid pointer
+    int *arr = (int*) mini_calloc(sizeof(int), 5);
+    mini_free(arr);
+    if (malloc_list->state != 0) {
+        printf("Test 1 Failed: mini_free did not mark the block as free\n");
+        return;
+    }
+    printf("Test 1 Passed\n");
+
+    // Test 2: Free a NULL pointer
+    mini_free(NULL);
+    printf("Test 2 Passed\n"); // Should not crash
+
+    // Test 3: Free a pointer not allocated by mini_calloc
+    int dummy;
+    mini_free(&dummy);
+    printf("Test 3 Passed\n"); // Should not crash
+}
+```
+
+Exercice 13.
+```c 
+void mini_exit()
+{
+    _exit(0);
+}
+```
+
+Exercice 14.
+```c
+#ifndef MINI_LIB_H
+#define MINI_LIB_H
+
+extern void* mini_calloc(int size_element, int number_element);
+extern void mini_free(void *ptr);
+extern void mini_exit();
+
+#endif // MINI_LIB_H
+```
+
+Exercice 15.
+```c 
+#define BUF_SIZE 1024
+
+char buffer[BUF_SIZE];
+int ind = -1;
+```
+
+Exercice 16.

@@ -1,27 +1,22 @@
 /**
  * @file mini_memory.c
- * @brief Custom memory allocation functions.
+ * @brief Custom memory allocation and deallocation functions.
  *
- * This file contains the implementation of a custom memory allocation function
- * using the `sbrk` system call. It includes the definition of a structure to
- * keep track of allocated memory blocks and a function to allocate and
- * initialize memory blocks.
+ * This file contains implementations of custom memory allocation and deallocation
+ * functions using a linked list to manage memory blocks. It includes functions
+ * for allocating zero-initialized memory blocks and freeing allocated memory.
  *
- * @include <unistd.h>
- * @include <stdio.h>
- * @include <string.h>
- * @include <stdlib.h>
- * @include "mini_lib.h"
+ * @author Your Name
+ * @date 2023-10-05
  */
 
-/**
+/*
  * @struct malloc_element
- * @brief Structure to keep track of allocated memory blocks.
+ * @brief Structure representing a memory block.
  *
- * This structure is used to keep track of memory blocks allocated by the
- * custom memory allocation function. It contains a pointer to the allocated
- * memory, the size of the allocated memory, the status of the memory block
- * (free or used), and a pointer to the next malloc_element in the list.
+ * This structure is used to represent a memory block in the custom memory
+ * allocation system. It contains information about the allocated memory,
+ * its size, state (free or used), and a pointer to the next memory block.
  *
  * @var malloc_element::ptr
  * Pointer to the allocated memory.
@@ -33,26 +28,46 @@
  * Pointer to the next malloc_element (NULL if none).
  */
 
-/**
+ /**
  * @var malloc_list
- * @brief Head of the linked list of malloc_element structures.
+ * @brief Head of the linked list of memory blocks.
  *
- * This variable points to the first element in the linked list of
- * malloc_element structures that keep track of allocated memory blocks.
+ * This variable points to the first element in the linked list of memory blocks.
+ * It is used to manage the memory blocks allocated by the custom memory allocation
+ * functions.
  */
 
-/**
- * @brief Allocates and initializes memory blocks.
+ /**
+ * @brief Allocates zero-initialized memory for an array.
  *
- * This function allocates memory for a specified number of elements of a
- * specified size using the `sbrk` system call. It initializes the allocated
- * memory to zero and keeps track of the allocated memory block using a
- * malloc_element structure.
+ * This function allocates memory for an array of elements, initializes the memory
+ * to zero, and returns a pointer to the allocated memory. If a suitable free block
+ * is found, it reuses the block; otherwise, it allocates new memory.
  *
- * @param size_element Size of each element to be allocated.
- * @param number_element Number of elements to be allocated.
- * @return Pointer to the allocated memory, or NULL if the allocation fails.
+ * @param size_element Size of each element.
+ * @param number_element Number of elements.
+ * @return Pointer to the allocated memory, or NULL if allocation fails.
  */
+void* mini_calloc(int size_element, int number_element);
+
+ /**
+ * @brief Frees the allocated memory.
+ *
+ * This function frees the memory block pointed to by the given pointer. It marks
+ * the memory block as free and attempts to merge adjacent free blocks.
+ *
+ * @param ptr Pointer to the memory block to be freed.
+ */
+void mini_free(void *ptr);
+
+ /**
+ * @brief Exits the program.
+ *
+ * This function terminates the program with an exit status of 0.
+ */
+void mini_exit();
+
+
 // include standard libraries
 #include <unistd.h>
 #include <stdio.h>
@@ -127,41 +142,38 @@ void* mini_calloc(int size_element, int number_element) {
     return memory;
 }
 
-void mini_free(void *ptr) {
-    // parameter validation
+
+void mini_free(void* ptr) {
     if (ptr == NULL) {
-        return;
+        printf("mini_free: NULL pointer, nothing to free.\n");
+        return; // Do nothing if the pointer is NULL
     }
 
-    // Find the malloc_element corresponding to the pointer
     struct malloc_element *current = malloc_list;
-    struct malloc_element *previous = NULL;
-    while (current != NULL && current->ptr != ptr) {
-        previous = current;
+
+    // Traverse the list to find the element corresponding to the pointer
+    while (current != NULL) {
+        if (current->ptr == ptr) {
+            // Check if the block is already marked as used
+            if (current->state == 1) {
+                // Mark the block as free
+                current->state = 0;
+            } else {
+                printf("mini_free: Block at %p is already free.\n", ptr); // Message if the block is already free
+            }
+            return; // Exit after finding and freeing the memory
+        }
         current = current->next_malloc;
     }
 
-    // If the pointer is not found, return
-    if (current == NULL) {
-        return;
-    }
+    // If we reach this point, it means the pointer was not found
+    fprintf(stderr, "mini_free: Error, pointer %p not allocated by mini_calloc\n", ptr);
+}
 
-    // Mark the memory block as free
-    current->state = 0;
 
-    // Check if the previous memory block is also free
-    if (previous != NULL && previous->state == 0) {
-        // Merge the two memory blocks
-        previous->total_size += current->total_size;
-        previous->next_malloc = current->next_malloc;
-        brk(current);
-    }
 
-    // Check if the next memory block is also free
-    if (current->next_malloc != NULL && current->next_malloc->state == 0) {
-        // Merge the two memory blocks
-        current->total_size += current->next_malloc->total_size;
-        current->next_malloc = current->next_malloc->next_malloc;
-        brk(current->next_malloc);
-    }
+
+void mini_exit()
+{
+    _exit(0);
 }
