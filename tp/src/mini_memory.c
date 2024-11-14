@@ -6,8 +6,8 @@
  * functions using a linked list to manage memory blocks. It includes functions
  * for allocating zero-initialized memory blocks and freeing allocated memory.
  *
- * @author Your Name
- * @date 2023-10-05
+ * @author Ted
+ * @date 2024-11-14
  */
 
 /*
@@ -87,6 +87,20 @@ struct malloc_element {
 
 struct malloc_element *malloc_list = NULL;
 
+void* mini_memset(void *ptr, int value, int num) {
+    // parameter validation
+    if (ptr == NULL || num < 0) {
+        return NULL;
+    }
+
+    char *p = (char*) ptr;
+    for (int i = 0; i < num; i++) {
+        p[i] = value;
+    }
+
+    return ptr;
+}
+
 void* mini_calloc(int size_element, int number_element) {
     // parameter validation
     if (size_element <= 0 || number_element <= 0) {
@@ -112,17 +126,19 @@ void* mini_calloc(int size_element, int number_element) {
     // No suitable free block found, allocate new memory
     void *memory = sbrk(total_size);
     if (memory == (void*) -1) {
-        perror("sbrk");
+       write(2,"sbrk",4);
         return NULL; // sbrk failed
     }
 
     // Initialize allocated memory to zero
-    memset(memory, 0, total_size);
+    mini_memset(memory, 0, total_size);
 
     // Create a new malloc_element
-    struct malloc_element *new_element = (struct malloc_element*) sbrk(sizeof(struct malloc_element));
+    struct malloc_element *new_element = sbrk(sizeof(struct malloc_element));
     if (new_element == (void*) -1) {
-        perror("sbrk");
+        write(2,"sbrk",4);
+        // Free the previously allocated memory to avoid memory leak
+        sbrk(-total_size);
         return NULL; // sbrk failed
     }
 
@@ -141,7 +157,6 @@ void* mini_calloc(int size_element, int number_element) {
 
     return memory;
 }
-
 
 void mini_free(void* ptr) {
     if (ptr == NULL) {
@@ -167,11 +182,8 @@ void mini_free(void* ptr) {
     }
 
     // If we reach this point, it means the pointer was not found
-    fprintf(stderr, "mini_free: Error, pointer %p not allocated by mini_calloc\n", ptr);
+    write(2, "mini_free: Error, pointer not allocated by mini_calloc\n", 54);
 }
-
-
-
 
 void mini_exit()
 {

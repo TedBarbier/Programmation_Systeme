@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 //include personal library
-
+#include "mini_lib.h"
 
 //define constant
 #define BUF_SIZE 1024

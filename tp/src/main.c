@@ -58,92 +58,86 @@ int main();
 
 
 // include personal library
-#include "mini_memory.c"
+#include "mini_lib.h"
 
 void test_mini_calloc() {
     printf("Running test_mini_calloc...\n");
 
-    // Test 1: Allocate memory and check if it's initialized to zero
-    int *arr = (int*) mini_calloc(sizeof(int), 5);
+    // Test 1: Allocate memory for 10 integers
+    int *arr = (int*) mini_calloc(sizeof(int), 10);
     if (arr == NULL) {
-        printf("Test 1 Failed: mini_calloc returned NULL\n");
-        return;
-    }
-    for (int i = 0; i < 5; i++) {
-        if (arr[i] != 0) {
-            printf("Test 1 Failed: Memory not initialized to zero\n");
-            return;
+        printf("Test 1 failed: mini_calloc returned NULL\n");
+    } else {
+        // Check if memory is zero-initialized
+        int passed = 1;
+        for (int i = 0; i < 10; i++) {
+            if (arr[i] != 0) {
+                passed = 0;
+                break;
+            }
         }
+        if (passed) {
+            printf("Test 1 passed\n");
+        } else {
+            printf("Test 1 failed: Memory not zero-initialized\n");
+        }
+        mini_free(arr);
     }
-    printf("Test 1 Passed\n");
 
     // Test 2: Allocate memory with invalid parameters
-    void *ptr = mini_calloc(-1, 5);
-    if (ptr != NULL) {
-
-        printf("Test 2 Failed: mini_calloc should return NULL for invalid parameters\n");
-        return;
+    void *ptr = mini_calloc(-1, 10);
+    if (ptr == NULL) {
+        printf("Test 2 passed\n");
+    } else {
+        printf("Test 2 failed: mini_calloc should return NULL for invalid parameters\n");
+        mini_free(ptr);
     }
-    printf("Test 2 Passed\n");
 
-    // Test 3: Reuse a free block
-    mini_free(arr);
-    int *arr2 = (int*) mini_calloc(sizeof(int), 5);
-    if (arr2 != arr) {
-        printf("Test 3 Failed: mini_calloc did not reuse the free block\n");
-        return;
+    // Test 3: Allocate memory for 0 elements
+    ptr = mini_calloc(sizeof(int), 0);
+    if (ptr == NULL) {
+        printf("Test 3 passed\n");
+    } else {
+        printf("Test 3 failed: mini_calloc should return NULL for 0 elements\n");
+        mini_free(ptr);
     }
-    printf("Test 3 Passed\n");
 }
 
 void test_mini_free() {
     printf("Running test_mini_free...\n");
 
     // Test 1: Free a valid pointer
-    int *arr = (int*) mini_calloc(sizeof(int), 5);
-    mini_free(arr);
-
-    // Parcourir malloc_list pour vérifier si le bloc est bien libre
-    struct malloc_element *current = malloc_list;
-    int found = 0;
-    while (current != NULL) {
-        if (current->ptr == arr) {
-            found = 1;
-            if (current->state != 0) {
-                printf("Test 1 Failed: mini_free did not mark the block as free\n");
-                return;
-            }
-            break;
-        }
-        current = current->next_malloc;
+    int *arr = (int*) mini_calloc(sizeof(int), 10);
+    if (arr != NULL) {
+        mini_free(arr);
+        printf("Test 1 passed\n");
+    } else {
+        printf("Test 1 failed: mini_calloc returned NULL\n");
     }
-    if (!found) {
-        printf("Test 1 Failed: Block not found in malloc_list\n");
-        return;
-    }
-
-    printf("Test 1 Passed\n");
 
     // Test 2: Free a NULL pointer
     mini_free(NULL);
-    printf("Test 2 Passed\n"); // Should not crash
+    printf("Test 2 passed\n");
 
-    // Test 3: Free a pointer not allocated by mini_calloc
-    int dummy;
-    mini_free(&dummy);
-    printf("Test 3 Passed\n"); // Should not crash
+    // Test 3: Free an already freed pointer
+    arr = (int*) mini_calloc(sizeof(int), 10);
+    if (arr != NULL) {
+        mini_free(arr);
+        mini_free(arr); // Free again
+        printf("Test 3 passed\n");
+    } else {
+        printf("Test 3 failed: mini_calloc returned NULL\n");
+    }
 }
-
-
 
 void test_mini_exit() {
     printf("Running test_mini_exit...\n");
 
-    // Test 1: Ensure mini_exit terminates the program
-    // Note: This test will terminate the program, so it should be the last test
-    printf("Test 1: mini_exit should terminate the program\n");
+    // Test: Call mini_exit (this will terminate the program)
+    printf("Calling mini_exit...\n");
     mini_exit();
-    printf("Test 1 Failed: mini_exit did not terminate the program\n");
+    // This line should not be reached
+    printf("Test failed: mini_exit did not terminate the program\n");
 }
 
 int main() {

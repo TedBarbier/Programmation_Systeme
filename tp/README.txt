@@ -44,9 +44,6 @@ void* mini_calloc(int size_element, int number_element) {
         perror("sbrk");
         return NULL; // sbrk failed
     }
-
-    // Initialize allocated memory to zero
-    memset(memoire, 0, size_element * number_element);
     return memoire;
 }
 
