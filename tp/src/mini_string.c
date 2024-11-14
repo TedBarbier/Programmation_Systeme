@@ -12,21 +12,24 @@
 char buffer[BUF_SIZE];
 int ind = -1;
 
-void mini_printf(char *str)
-{
-    if (ind == -1)
-    {
+// Fonction mini_printf
+void mini_printf(char *str) {
+    // Parcourir la chaîne de caractères passée en argument
+    if (ind == -1) {
         ind = 0;
     }
-
-    while (*str)
-    {
+    while (*str) {
         buffer[ind++] = *str;
-        if (ind == BUF_SIZE || *str == '\n')
-        {
+
+        // Si le tampon est plein ou si le caractère est un saut de ligne
+        if (ind == BUF_SIZE || *str == '\n') {
+            // Écrire le contenu du tampon dans la sortie standard
             write(STDOUT_FILENO, buffer, ind);
-            ind = 0;
+            ind = 0; // Réinitialiser l'indice pour reprendre à 0
         }
+
         str++;
     }
+    ind = 0;
 }
+

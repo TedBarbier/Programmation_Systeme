@@ -140,9 +140,34 @@ void test_mini_exit() {
     printf("Test failed: mini_exit did not terminate the program\n");
 }
 
+void test_mini_printf() {
+    // Test case 1: Simple string
+    char test1[] = "Hello, World!\n";
+    printf("Test 1: %s\n", test1);
+    mini_printf(test1);
+
+    // Test case 2: String without newline
+    char test2[] = "This is a test string without newline";
+    printf("Test 2: %s\n", test2);
+    mini_printf(test2);
+
+    // Test case 3: String with multiple newlines
+    char test3[] = "Line 1\nLine 2\nLine 3\n";
+    printf("Test 3: %s\n", test3);
+    mini_printf(test3);
+
+    // Test case 4: String that exceeds buffer size
+    char test4[1024 + 10];
+    memset(test4, 'A', 1024 + 9);
+    test4[1024 + 9] = '\0';
+    printf("Test 4: String of length %d\n", 1024 + 9);
+    mini_printf(test4);
+}
+
 int main() {
     test_mini_calloc();
     test_mini_free();
-    test_mini_exit();
+    //test_mini_exit();
+    test_mini_printf();
     return 0;
 }
