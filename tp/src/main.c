@@ -55,6 +55,7 @@ int main();
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 
 // include personal library
@@ -164,10 +165,49 @@ void test_mini_printf() {
     mini_printf(test4);
 }
 
+void test_mini_scanf() {
+    char buffer[100];
+    int result;
+
+    // Test 1: Normal input
+    const char *input1 = "Hello, World!";
+    write(STDIN_FILENO, input1, strlen(input1));
+    result = mini_scanf(buffer, sizeof(buffer));
+    assert(result == (int)strlen(input1));
+    assert(strcmp(buffer, input1) == 0);
+    printf("Test 1 passed");
+
+    // Test 2: Buffer is NULL
+    result = mini_scanf(NULL, sizeof(buffer));
+    assert(result == -1);
+    printf("Test 2 passed");
+
+    // Test 3: size_buffer is zero
+    result = mini_scanf(buffer, 0);
+    assert(result == -1);
+    printf("Test 3 passed");
+
+    // Test 4: size_buffer is negative
+    result = mini_scanf(buffer, -1);
+    assert(result == -1);
+    printf("Test 4 passed");
+
+    // Test 5: Input larger than buffer size
+    const char *input2 = "This is a very long input string that exceeds the buffer size.";
+    write(STDIN_FILENO, input2, strlen(input2));
+    result = mini_scanf(buffer, 10);
+    assert(result == 10);
+    buffer[10] = '\0'; // Null-terminate the string for comparison
+    assert(strncmp(buffer, input2, 10) == 0);
+    printf("Test 5 passed");
+    printf("All tests passed!\n");
+}
+
 int main() {
     test_mini_calloc();
     test_mini_free();
-    //test_mini_exit();
+    test_mini_scanf();
     test_mini_printf();
+    test_mini_exit();
     return 0;
 }
