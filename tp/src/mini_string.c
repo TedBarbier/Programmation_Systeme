@@ -52,6 +52,22 @@ int mini_scanf(char* buffer, int size_buffer){
         return -1;
     }
     char c;
-    read(STDIN_FILENO,buffer,size_buffer);
-    return strlen(buffer);
+    int nb_carac = 0;
+    while(nb_carac < BUF_SIZE-1)
+    {
+        if (read(STDIN_FILENO, &c, 1) <= 0) {
+            break;
+        }
+        if (c == '\n') {
+            break;
+        }
+        *buffer = c;
+        buffer++;
+        nb_carac++;
+    }
+    *buffer = "\0";
+    while (c != "\n" && read(STDIN_FILENO,&c,1)>0){
+
+    }
+    return nb_carac;
 }
