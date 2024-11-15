@@ -39,6 +39,7 @@ void mini_printf(char *str)
             ind = 0;
         }
     }
+    ind = 0;
 }
 
 
