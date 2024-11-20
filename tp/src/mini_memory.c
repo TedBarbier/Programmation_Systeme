@@ -187,6 +187,7 @@ void mini_free(void* ptr) {
 
 void mini_exit()
 {
+    mini_exit_flush();
     mini_exit_printf();
     _exit(0);
 }

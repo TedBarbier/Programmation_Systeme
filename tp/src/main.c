@@ -63,101 +63,121 @@ int main();
 #include "mini_lib.h"
 
 
-/*
--------------------------------------
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <sys/errno.h>
+#include "mini_lib.h"
 
+typedef struct {
+    const char* test_name;
+    int passed;
+} TestResult;
 
-        Test mini_memory.c
+TestResult test_results[100];  // tableau pour stocker les résultats des tests
+int test_count = 0;
+int failed_tests = 0;
 
+// Fonction pour enregistrer les résultats de chaque test
+void record_test_result(const char* test_name, int passed) {
+    test_results[test_count].test_name = test_name;
+    test_results[test_count].passed = passed;
+    if (!passed) {
+        failed_tests++;
+    }
+    test_count++;
+}
 
--------------------------------------
+// Fonction pour afficher les tests échoués
+void print_failed_tests() {
+    if (failed_tests > 0) {
+        printf("\n==== Failed Tests ====\n");
+        for (int i = 0; i < test_count; i++) {
+            if (!test_results[i].passed) {
+                printf("Test failed: %s\n", test_results[i].test_name);
+            }
+        }
+    } else {
+        printf("\nAll tests passed!\n");
+    }
+}
 
-
-*/
-void test_mini_calloc() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_calloc");
-    printf("\n\n\n");
+// Fonction utilitaire pour afficher un en-tête pour chaque test
+void print_test_header(const char *test_name) {
     printf("-------------------------------------\n");
+    printf("        Test %s\n", test_name);
+    printf("-------------------------------------\n");
+}
+
+// Fonction utilitaire pour afficher le résultat d'un test
+void print_test_result(int passed, const char *test_name) {
+    if (passed) {
+        printf("%s passed\n", test_name);
+    } else {
+        printf("%s failed\n", test_name);
+        record_test_result(test_name, 0);
+    }
+}
+
+
+
+void test_mini_memset() {
+    print_test_header("mini_memset");
+    char arr[10];
+    mini_memset(arr, 'A', sizeof(arr));
+    print_test_result(arr[0] == 'A' && arr[9] == 'A', "Test 1 - Setting all elements to 'A'");
+}
+
+void test_mini_calloc() {
+    print_test_header("mini_calloc");
 
     // Test 1: Allocate memory for 10 integers
     int *arr = (int*) mini_calloc(sizeof(int), 10);
-    if (arr == NULL) {
-        printf("Test 1 failed: mini_calloc returned NULL\n");
-    } else {
-        // Check if memory is zero-initialized
-        int passed = 1;
+    int passed = (arr != NULL);
+    if (passed) {
+        passed = 1;
         for (int i = 0; i < 10; i++) {
             if (arr[i] != 0) {
                 passed = 0;
                 break;
             }
         }
-        if (passed) {
-            printf("Test 1 passed\n");
-        } else {
-            printf("Test 1 failed: Memory not zero-initialized\n");
-        }
-        mini_free(arr);
     }
+    print_test_result(passed, "Test 1 - Allocate and initialize to zero");
+    mini_free(arr);
 
-    // Test 2: Allocate memory with invalid parameters
+    // Test 2: Invalid parameters
     void *ptr = mini_calloc(-1, 10);
-    if (ptr == NULL) {
-        printf("Test 2 passed\n");
-    } else {
-        printf("Test 2 failed: mini_calloc should return NULL for invalid parameters\n");
-        mini_free(ptr);
-    }
+    print_test_result(ptr == NULL, "Test 2 - Invalid parameters");
 
-    // Test 3: Allocate memory for 0 elements
+    // Test 3: Zero elements
     ptr = mini_calloc(sizeof(int), 0);
-    if (ptr == NULL) {
-        printf("Test 3 passed\n");
-    } else {
-        printf("Test 3 failed: mini_calloc should return NULL for 0 elements\n");
-        mini_free(ptr);
-    }
+    print_test_result(ptr == NULL, "Test 3 - Allocate zero elements");
 }
 
 void test_mini_free() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_free");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
+    print_test_header("mini_free");
 
     // Test 1: Free a valid pointer
     int *arr = (int*) mini_calloc(sizeof(int), 10);
-    if (arr != NULL) {
-        mini_free(arr);
-        printf("Test 1 passed\n");
-    } else {
-        printf("Test 1 failed: mini_calloc returned NULL\n");
-    }
+    mini_free(arr);
+    print_test_result(1, "Test 1 - Free valid pointer");
 
     // Test 2: Free a NULL pointer
     mini_free(NULL);
-    printf("Test 2 passed\n");
+    print_test_result(1, "Test 2 - Free NULL pointer");
 
-    // Test 3: Free an already freed pointer
+    // Test 3: Free already freed pointer
     arr = (int*) mini_calloc(sizeof(int), 10);
-    if (arr != NULL) {
-        mini_free(arr);
-        mini_free(arr); // Free again
-        printf("Test 3 passed\n");
-    } else {
-        printf("Test 3 failed: mini_calloc returned NULL\n");
-    }
+    mini_free(arr);
+    mini_free(arr);  // Free again
+    print_test_result(1, "Test 3 - Free already freed pointer");
 }
 
 void test_mini_exit() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_exit");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
+    print_test_header("mini_exit");
 
     // Test: Call mini_exit (this will terminate the program)
     printf("Calling mini_exit...\n");
@@ -165,280 +185,227 @@ void test_mini_exit() {
     // This line should not be reached
     printf("Test failed: mini_exit did not terminate the program\n");
 }
-
-/*
--------------------------------------
-
-
-        Test mini_string.c
-
-
--------------------------------------
-*/
-
-void test_mini_printf() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_printf");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
-    // Test case 1: Simple string
-    char test1[] = "Hello, World!\n";
-    printf("Test 1: %s\n", test1);
-    mini_printf(test1);
-
-    // Test case 2: String without newline
-    char test2[] = "This is a test string without newline";
-    printf("Test 2: %s\n", test2);
-    mini_printf(test2);
-
-    // Test case 3: String with multiple newlines
-    char test3[] = "Line 1\nLine 2\nLine 3\n";
-    printf("Test 3: %s\n", test3);
-    mini_printf(test3);
-
-    // Test case 4: String that exceeds buffer size
-    char test4[1024 + 10];
-    memset(test4, 'A', 1024 + 9);
-    test4[1024 + 9] = '\0';
-    printf("Test 4: String of length %d\n", 1024 + 9);
-    mini_printf(test4);
+void test_mini_memory(void) {
+    test_mini_memset();
+    test_mini_calloc();
+    test_mini_free();
 }
 
+void test_mini_printf(void) {
+    print_test_header("mini_printf");
+
+    // Test 1: Simple string
+    char test1[] = "Hello, World!\n";
+    mini_printf(test1);
+    print_test_result(1, "Test 1 - Simple string");
+
+    // Test 2: Another simple string with different content
+    char test2[] = "This is a test of mini_printf.\n";
+    mini_printf(test2);
+    print_test_result(1, "Test 2 - Another simple string");
+
+    // Test 3: Empty string (just a newline)
+    char test3[] = "\n";
+    mini_printf(test3);
+    print_test_result(1, "Test 3 - Empty string");
+
+    // Test 4: Long string (more than usual length)
+    char long_str[1024+9];
+    memset(long_str, 'A', sizeof(long_str) - 1);
+    long_str[1023+9] = '\0';  // Ensure proper string termination
+    mini_printf(long_str);
+    print_test_result(1, "Test 4 - Long string");
+
+
+    // Test 5: String with special characters like newline and tab
+    char special_chars[] = "Newline:\nTab:\tEnd of special chars.\n";
+    mini_printf(special_chars);
+    print_test_result(1, "Test 5 - Special characters");
+
+    // Test 6: Non-printable characters (just for checking output)
+    char non_printable[] = "Testing with a non-printable character: \x01\n";
+    mini_printf(non_printable);
+    print_test_result(1, "Test 6 - Non-printable characters");
+
+    // Test 7: Multiple lines of text
+    mini_printf("Line 1\nLine 2\nLine 3\n");
+    print_test_result(1, "Test 7 - Multiple lines");
+}
+
+
+
 void test_mini_scanf() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_scanf");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
+    print_test_header("mini_scanf");
     char buffer[100];
     int result;
 
     // Test 1: Normal input
-    printf("Ecrire : 'Hello, World!'\n");
     const char *input1 = "Hello, World!";
     result = mini_scanf(buffer, sizeof(buffer));
-    if (result == (int)strlen(input1) && strcmp(buffer, input1) == 0) {
-        printf("Test 1 passed\n");
-    } else {
-        printf("Test 1 failed\n");
-    }
+    print_test_result(result == (int)strlen(input1) && strcmp(buffer, input1) == 0, "Test 1 - Normal input");
 
-    // Test 2: Buffer is NULL
+    // Test 2: NULL buffer
     result = mini_scanf(NULL, sizeof(buffer));
-    if (result == -1) {
-        printf("Test 2 passed\n");
-    } else {
-        printf("Test 2 failed\n");
-    }
+    print_test_result(result == -1, "Test 2 - NULL buffer");
 
-    // Test 3: size_buffer is zero
+    // Test 3: Zero buffer size
     result = mini_scanf(buffer, 0);
-    if (result == -1) {
-        printf("Test 3 passed\n");
-    } else {
-        printf("Test 3 failed\n");
-    }
-
-    // Test 4: size_buffer is negative
-    result = mini_scanf(buffer, -1);
-    if (result == -1) {
-        printf("Test 4 passed\n");
-    } else {
-        printf("Test 4 failed\n");
-    }
-
-    // Test 5: Input larger than buffer size
-    printf("Ecrire : 'This is a very long input string that exceeds the buffer size.'\n");
-    const char *input2 = "This is a very long input string that exceeds the buffer size.";
-    result = mini_scanf(buffer, 10);
-    if (result == 10 && strncmp(buffer, input2, 10) == 0) {
-        printf("Test 5 passed\n");
-    } else {
-        printf("Test 5 failed\n");
-    }
-    printf("All tests passed!\n");
+    print_test_result(result == -1, "Test 3 - Zero buffer size");
 }
 
 void test_mini_strlen() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_strlen");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
+    print_test_header("mini_strlen");
+
     char *test1 = "Hello, World!";
     char *test2 = "";
     char *test3 = "mini_strlen test";
 
-    int result1 = mini_strlen(test1);
-    int result2 = mini_strlen(test2);
-    int result3 = mini_strlen(test3);
-    if (13 == result1)printf("Test 1 passed\n");
-    else printf("test1 failed\n"); 
-    if (0 == result2)printf("Test 2 passed\n");
-    else printf("test2 failed\n"); 
-    if (16 == result3)printf("Test 3 passed\n");
-    else printf("test3 failed\n"); 
+    print_test_result(mini_strlen(test1) == 13, "Test 1 - Non-empty string");
+    print_test_result(mini_strlen(test2) == 0, "Test 2 - Empty string");
+    print_test_result(mini_strlen(test3) == 16, "Test 3 - Non-empty string with spaces");
 }
 
 void test_mini_strcopy() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_strcopy");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
+    print_test_header("mini_strcopy");
+
     char source[] = "Hello, World!";
     char destination[50];
 
     int copied_length = mini_strcopy(source, destination);
-    // Check if the copied length is correct
-    if (copied_length == 13) {
-        printf("Length test passed for mini_strcopy!\n");
-    } else {
-        printf("Length test failed for mini_strcopy!\n");
-    }
-    // Check if the destination string is correctly copied
-    if (strcmp(source, destination) == 0) {
-        printf("String copy test passed for mini_strcopy!\n");
-    } else {
-        printf("String copy test failed for mini_strcopy!\n");
-    }
+    print_test_result(copied_length == 13, "Test 1 - Length of copied string");
+    print_test_result(strcmp(source, destination) == 0, "Test 2 - String copy correctness");
 }
 
 void test_mini_strcmp() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_strcmp");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
+    print_test_header("mini_strcmp");
+
     char str1[] = "Hello, World!";
     char str2[] = "Hello, World!";
     char str3[] = "Hello, C Programming!";
 
-    // Test when strings are equal
-    if (mini_strcmp(str1, str2) == 0) {
-        printf("Equality test passed for mini_strcmp!\n");
-    } else {
-        printf("Equality test failed for mini_strcmp!\n");
-    }
-
-    // Test when strings are not equal
-    if (mini_strcmp(str1, str3) == -1) {
-        printf("Inequality test passed for mini_strcmp!\n");
-    } else {
-        printf("Inequality test failed for mini_strcmp!\n");
-    }
+    print_test_result(mini_strcmp(str1, str2) == 0, "Test 1 - Strings are equal");
+    print_test_result(mini_strcmp(str1, str3) == -1, "Test 2 - Strings are not equal");
 }
 
 void test_mini_perror() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_perror");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
-    // Test 1: mini_perror with a custom message and a set errno
-    errno = ENOENT; // No such file or directory
-    mini_printf("Test Error 1 :");
+    print_test_header("mini_perror");
+
+    // Test 1: mini_perror with custom message and errno
+    errno = ENOENT;
     mini_perror("Error 1");
+    print_test_result(1, "Test 1 - Print error message");
 
-
-    // Test 2: mini_perror with a different errno
-    errno = EACCES; // Permission denied
-    mini_printf("Test Error 2 :");
-    mini_perror("Error 2");
-
-
-    // Test 3: mini_perror with errno set to 0
+    // Test 2: mini_perror with errno set to 0
     errno = 0;
-    mini_printf("Test Error 3 :");
-    mini_perror("Error 3");
+    mini_perror("Error 2");
+    print_test_result(1, "Test 2 - Print error message with errno 0");
 
-    // Test 4: mini_perror with a NULL message
-    errno = EINVAL; // Invalid argument
-    mini_printf("Test Error 4 :");
+    // Test 3: mini_perror with NULL message
     mini_perror(NULL);
-
+    print_test_result(1, "Test 3 - Print error message with NULL message");
 }
 
-/*
--------------------------------------
-
-
-        Test mini_io.c
-
-
--------------------------------------
-
-
-*/
-/*
-void test_mini_fopen() {
-    printf("-------------------------------------");
-    printf("\n\n\n");
-    printf("        Test mini_fopen");
-    printf("\n\n\n");
-    printf("-------------------------------------\n");
-    MYFILE* file;
-
-    // Test opening a file in read mode
-    file = mini_fopen("test_read.txt", 'r');
-    if (file == NULL) {
-        perror("Failed to open file in read mode");
-    } else {
-        printf("Successfully opened file in read mode\n");
-        mini_fclose(file);
-    }
-
-    // Test opening a file in write mode
-    file = mini_fopen("test_write.txt", 'w');
-    if (file == NULL) {
-        perror("Failed to open file in write mode");
-    } else {
-        printf("Successfully opened file in write mode\n");
-        mini_fclose(file);
-    }
-
-    // Test opening a file in read/write mode
-    file = mini_fopen("test_read_write.txt", 'b');
-    if (file == NULL) {
-        perror("Failed to open file in read/write mode");
-    } else {
-        printf("Successfully opened file in read/write mode\n");
-        mini_fclose(file);
-    }
-
-    // Test opening a file in append mode
-    file = mini_fopen("test_append.txt", 'a');
-    if (file == NULL) {
-        perror("Failed to open file in append mode");
-    } else {
-        printf("Successfully opened file in append mode\n");
-        mini_fclose(file);
-    }
-
-    // Test opening a file with an invalid mode
-    file = mini_fopen("test_invalid.txt", 'x');
-    if (file == NULL) {
-        if (errno == EINVAL) {
-            printf("Correctly handled invalid mode\n");
-        } else {
-            perror("Failed to handle invalid mode correctly");
-        }
-    } else {
-        printf("Unexpectedly opened file with invalid mode\n");
-        mini_fclose(file);
-    }
-}
-*/
-int main() {
-    test_mini_calloc();
-    test_mini_free();
+void test_mini_string(void) {
+    test_mini_printf();
     test_mini_scanf();
     test_mini_strlen();
     test_mini_strcopy();
     test_mini_strcmp();
     test_mini_perror();
-    test_mini_printf();
+}
+
+void test_mini_fopen() {
+    print_test_header("mini_fopen");
+
+    MYFILE* file;
+
+    // Test opening a file in read mode
+    file = mini_fopen("test_read.txt", 'r');
+    print_test_result(file != NULL, "Test 1 - Open file in read mode");
+
+    // Test opening a file in write mode
+    file = mini_fopen("test_write.txt", 'w');
+    print_test_result(file != NULL, "Test 2 - Open file in write mode");
+
+    // Test opening a file with invalid mode
+    file = mini_fopen("test_invalid.txt", 'x');
+    print_test_result(file == NULL, "Test 3 - Handle invalid mode");
+}
+
+void test_mini_memcpy() {
+    print_test_header("mini_memcpy");
+
+    char src[] = "Hello, World!";
+    char dest[20];
+    mini_memcpy(dest, src, strlen(src) + 1);
+    print_test_result(strcmp(src, dest) == 0, "Test 1 - Correct memcpy");
+}
+
+void test_mini_memmove() {
+    print_test_header("mini_memmove");
+
+    char str[] = "abcdef";
+    mini_memmove(str + 2, str, 4);
+    print_test_result(strcmp(str, "ababcde") == 0, "Test 1 - Correct memmove");
+}
+
+void test_mini_fread() {
+    print_test_header("mini_fread");
+
+    MYFILE* file = mini_fopen("test.txt", 'r');
+    char buffer[50];
+    int bytes_read = mini_fread(buffer, 1, 50, file);
+    print_test_result(bytes_read > 0, "Test 1 - Read data from file");
+    mini_fclose(file);
+}
+
+void test_mini_fwrite() {
+    print_test_header("mini_fwrite");
+
+    MYFILE* file = mini_fopen("test.txt", 'w');
+    char data[] = "Hello, World!";
+    int bytes_written = mini_fwrite(data, 1, strlen(data), file);
+    print_test_result(bytes_written == strlen(data), "Test 1 - Write data to file");
+    mini_fclose(file);
+}
+
+void test_mini_fflush() {
+    print_test_header("mini_fflush");
+
+    MYFILE* file = mini_fopen("test.txt", 'w');
+    mini_fflush(file);
+    print_test_result(1, "Test 1 - Flush file buffer");
+    mini_fclose(file);
+}
+
+void test_mini_fclose() {
+    print_test_header("mini_fclose");
+
+    MYFILE* file = mini_fopen("test.txt", 'r');
+    mini_fclose(file);
+    print_test_result(1, "Test 1 - Close file");
+}
+
+void test_mini_io(void) {
+    test_mini_fopen();
+    test_mini_memcpy();
+    test_mini_memmove();
+    test_mini_fread();
+    test_mini_fwrite();
+    test_mini_fflush();
+    test_mini_fclose();
+}
+
+
+// Fonction principale pour lancer tous les tests
+int main(void) {
+    test_mini_memory();
+    test_mini_string();
+    test_mini_io();
+
+    // Affichage des tests échoués avant d'exécuter mini_exit
+    print_failed_tests();
+
     test_mini_exit();
     return 0;
 }
