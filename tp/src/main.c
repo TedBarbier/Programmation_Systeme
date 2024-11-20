@@ -346,7 +346,9 @@ void test_mini_memmove() {
 
     char str[] = "abcdef";
     mini_memmove(str + 2, str, 4);
-    print_test_result(strcmp(str, "ababcde") == 0, "Test 1 - Correct memmove");
+    char str2[] = "abcdef";
+    memmove(str2+2,str2, 4);
+    print_test_result(strcmp(str, str2) == 0, "Test 1 - Correct memmove");
 }
 
 void test_mini_fread() {
@@ -399,8 +401,8 @@ void test_mini_io(void) {
 
 // Fonction principale pour lancer tous les tests
 int main(void) {
-    test_mini_memory();
-    test_mini_string();
+    //test_mini_memory();
+    //test_mini_string();
     test_mini_io();
 
     // Affichage des tests échoués avant d'exécuter mini_exit

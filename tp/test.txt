@@ -1,0 +1,3 @@
+Ceci est un test de lecture et d'écriture.
+Il contient plusieurs lignes.
+La dernière ligne contient un caractère spécial : é à tester.

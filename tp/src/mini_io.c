@@ -4,7 +4,7 @@
 #include <sys/errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <stdio.h>
 #include "mini_lib.h"
 
 #define IOBUFFER_SIZE 2048
@@ -120,35 +120,35 @@ void* mini_memmove(void* dest, const void* src, int n) {
     char* d = (char*)dest;
     const char* s = (const char*)src;
 
-    // Si la destination est avant la source (les blocs ne se chevauchent pas)
+    // Si les pointeurs source et destination sont égaux, ne rien faire
+    if (d == s) {
+        return dest;
+    }
+
     if (d < s) {
-        // Copier de gauche à droite
+        // Si destination avant source, copier de gauche à droite
         for (int i = 0; i < n; i++) {
             d[i] = s[i];
         }
-    } else if (d > s) {
-        // Si la destination est après la source (les blocs ne se chevauchent pas)
-        // Copier de droite à gauche
+    } else {
+        // Si destination après source, copier de droite à gauche
         for (int i = n - 1; i >= 0; i--) {
             d[i] = s[i];
         }
     }
 
-    // Si la destination et la source se chevauchent, rien à faire (cas déjà couvert par les deux premiers cas)
     return dest;
 }
-
-
 
 int mini_fread(void* buffer, int size_element, int number_element, MYFILE* file) {
     if (!buffer || !file || size_element <= 0 || number_element <= 0) {
         errno = EINVAL; // Paramètres invalides
         mini_perror("Invalid parameters");
-        return 0;
+        return -1;
     }
 
     int total_size = size_element * number_element; // Taille totale à lire
-    int bytes_read = 0;  // Nombre total de caractères lus
+    int bytes_read = 0;                             // Nombre total de caractères lus
     char* user_buffer = (char*)buffer;
 
     // Allocation du tampon de lecture si nécessaire
@@ -157,14 +157,14 @@ int mini_fread(void* buffer, int size_element, int number_element, MYFILE* file)
         if (!file->buffer_read) {
             errno = ENOMEM;
             mini_perror("Failed to allocate buffer_read");
-            return 0;
+            return -1;
         }
         file->ind_read = 0; // Initialisation de l'indicateur
     }
 
     while (bytes_read < total_size) {
-        // Si le tampon est vide, lire un nouveau bloc depuis le fichier
-        if (file->ind_read <= 0) {
+        // Si l'index de lecture est à 0, lire un nouveau bloc depuis le fichier
+        if (file->ind_read == 0) {
             int result = read(file->fd, file->buffer_read, IOBUFFER_SIZE);
             if (result == 0) {
                 // Fin de fichier atteinte
@@ -172,9 +172,9 @@ int mini_fread(void* buffer, int size_element, int number_element, MYFILE* file)
             } else if (result < 0) {
                 // Gestion des erreurs de lecture
                 mini_perror("Error reading file");
-                return bytes_read; // Retourne ce qui a été lu avant l'erreur
+                return -1;
             }
-            file->ind_read = result; // Met à jour la taille de données dans le tampon
+            file->ind_read = result; // Met à jour la taille des données disponibles dans le tampon
         }
 
         // Calculer combien de données copier du tampon
@@ -192,14 +192,15 @@ int mini_fread(void* buffer, int size_element, int number_element, MYFILE* file)
 
         // Décaler les données restantes dans le tampon
         if (file->ind_read > 0) {
-            mini_memmove(file->buffer_read, 
-                         (char*)file->buffer_read + bytes_to_copy, 
+            mini_memmove(file->buffer_read,
+                         (char*)file->buffer_read + bytes_to_copy,
                          file->ind_read);
         }
     }
 
     return bytes_read; // Retourne le nombre de caractères lus
 }
+
 
 
 int mini_fwrite(void* buffer, int size_element, int number_element, MYFILE* file) {
